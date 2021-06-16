@@ -2,7 +2,7 @@
 ## A High Reward Strategy Employed by a Hebbian Cellular Automaton Policy 
 
 <div align="center">
-<img src="assets/harli_reset_wave_strategy.gif">
+<img src="assets/harli_reset_wave_strategy_small.gif">
 </div>
 
 <em>
