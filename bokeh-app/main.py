@@ -51,18 +51,26 @@ agent.set_params(np.load(policy_list[0]))
 env.rules_from_string(my_rules)
 
 global obs
-obs = env.reset()
-
-p = figure(plot_width=3*256, plot_height=3*256, title="CA Universe")
-p_plot = figure(plot_width=int(2.5*256), plot_height=int(2.5*256), title="'Reward'")
-
 global my_period
 global number_agents
 global agent_number
-
-agent_number = 0
-number_agents = len(policy_list)
+global agent_on
+global action
+global reward_sum
+                
+obs = env.reset()
 my_period = 512
+
+number_agents = len(policy_list)
+agent_number = 0
+
+agent_on = False
+action = torch.zeros(1, 1, env.action_height, env.action_width)
+
+reward_sum = 0.0
+
+p = figure(plot_width=3*256, plot_height=3*256, title="CA Universe")
+p_plot = figure(plot_width=int(2.5*256), plot_height=int(2.5*256), title="'Reward'")
 
 source = ColumnDataSource(data=dict(my_image=[obs.squeeze().cpu().numpy()]))
 source_plot = ColumnDataSource(data=dict(x=np.arange(1), y=np.arange(1)*0))
@@ -82,6 +90,9 @@ button_survive = Button(sizing_mode="stretch_width", label="Update Survive Rules
 button_reset_prev_agent = Button(sizing_mode="stretch_width",label="Reset w/ Prev. Agent")
 button_reset_this_agent = Button(sizing_mode="stretch_width",label="Reset w/ This Agent")
 button_reset_next_agent = Button(sizing_mode="stretch_width",label="Reset w/ Next Agent")
+    
+button_reset_w_spaceship = Button(sizing_mode="stretch_width",label="Reset w/ Spaceship")
+button_reset_w_glider = Button(sizing_mode="stretch_width",label="Reset w/ Glider")
 
 button_agent_switch = Button(sizing_mode="stretch_width", label="Turn Agent Off")
 
@@ -95,6 +106,7 @@ def update():
         global my_step
         global rewards
         global agent_number
+        global reward_sum
         
         obs, r, d, i = env.step(action)
         rewards = np.append(rewards, r.cpu().numpy().item())
@@ -116,9 +128,11 @@ def update():
         
         source.stream(new_data, rollover=1)
         source_plot.stream(new_line, rollover=2000)
-        
+
         my_step += 1
-        message.text = f"agent {agent_number}, step {my_step}, reward: {r.item()} \n"\
+        reward_sum += r.item()
+        message.text = f"agent {agent_number}, step {my_step}, reward: {r.item():.4f}," \
+                f"mean reward per step: {(reward_sum/my_step):.4f} \n" \
                 f"{policy_list[agent_number]}"
     
 def go():
@@ -143,6 +157,100 @@ def slower():
     go()
     go()
 
+def reset_w_spaceship():
+    global obs
+    global action
+    global stretch_pixel
+    global my_step
+    global rewards
+    global agent_number
+    global number_agents
+    global reward_sum
+
+    reward_sum = 0.0
+
+    my_step = 0
+    new_line = dict(x=[my_step], y=[0])
+    obs = env.reset()
+    stretch_pixel = torch.zeros_like(obs).squeeze()
+    stretch_pixel[0,0] = 3
+    agent.reset()
+
+    if agent_on:
+        action = agent(obs)
+    else:
+        # add a spaceship to the action
+        action[:, :, 32, 32:34] = 1.0
+        action[:, :, 33, 29:32] = 1.0
+        action[:, :, 33, 33:35] = 1.0
+        action[:, :, 34, 29:34] = 1.0
+        action[:, :, 35, 30:33] = 1.0
+
+    padded_action = stretch_pixel/2 + env.inner_env.action_padding(action).squeeze()
+
+    my_img = (padded_action*2 + obs.squeeze()).cpu().numpy()
+    my_img[my_img > 3.0] = 3.0
+    (padded_action*2 + obs.squeeze()).cpu().numpy()
+    new_data = dict(my_image=[my_img])
+
+    source.stream(new_data, rollover=1)
+    source_plot.stream(new_line, rollover=2)
+
+    message.text = f"agent {agent_number}, step {my_step} \n"\
+            f"{policy_list[agent_number]}"
+
+    rewards = np.array([0])
+
+    source_plot.stream(new_line, rollover=1)
+    source.stream(new_data, rollover=8)
+
+def reset_w_glider():
+    global obs
+    global action
+    global stretch_pixel
+    global my_step
+    global rewards
+    global agent_number
+    global number_agents
+    global use_spaceship
+    global reward_sum
+
+    reward_sum = 0.0
+
+    my_step = 0
+    new_line = dict(x=[my_step], y=[0])
+    obs = env.reset()
+    stretch_pixel = torch.zeros_like(obs).squeeze()
+    stretch_pixel[0,0] = 3
+    agent.reset()
+
+    if agent_on:
+        action = agent(obs)
+    else:
+        # add a glider to the action
+        action[:, :, 34, 32] = 1.0
+        action[:, :, 33, 32:34] = 1.0
+        action[:, :, 32, 31] = 1.0
+        action[:, :, 32, 33] = 1.0
+
+    padded_action = stretch_pixel/2 + env.inner_env.action_padding(action).squeeze()
+
+    my_img = (padded_action*2 + obs.squeeze()).cpu().numpy()
+    my_img[my_img > 3.0] = 3.0
+    (padded_action*2 + obs.squeeze()).cpu().numpy()
+    new_data = dict(my_image=[my_img])
+
+    source.stream(new_data, rollover=1)
+    source_plot.stream(new_line, rollover=2)
+
+    message.text = f"agent {agent_number}, step {my_step} \n"\
+            f"{policy_list[agent_number]}"
+
+    rewards = np.array([0])
+
+    source_plot.stream(new_line, rollover=1)
+    source.stream(new_data, rollover=8)
+
 def reset_this_agent():
     global obs
     global stretch_pixel
@@ -150,7 +258,10 @@ def reset_this_agent():
     global rewards
     global agent_number
     global number_agents
-    
+    global reward_sum
+
+    reward_sum = 0.0
+
     my_step = 0
     
     obs = env.reset()        
@@ -174,6 +285,9 @@ def reset_next_agent():
     global rewards
     global agent_number
     global number_agents
+    global reward_sum
+
+    reward_sum = 0.0
     
     my_step = 0
     
@@ -204,6 +318,9 @@ def reset_prev_agent():
     global rewards
     global agent_number
     global number_agents
+    global reward_sum
+
+    reward_sum = 0.0
     
     my_step = 0
     
@@ -311,19 +428,18 @@ def agent_on_off():
         agent_on = True
         button_agent_switch.label = "Turn Agent Off"
 
-global agent_on
-agent_on = True
-global action
-action = torch.zeros(1, 1, env.action_height, env.action_width)
 
-reset_this_agent()
-
+reset_w_glider()
+     
 p.on_event(Tap, human_toggle)
 p.on_event(DoubleTap, clear_toggles)
 
 button_reset_prev_agent.on_click(reset_prev_agent)
 button_reset_this_agent.on_click(reset_this_agent)
 button_reset_next_agent.on_click(reset_next_agent)
+
+button_reset_w_glider.on_click(reset_w_glider)
+button_reset_w_spaceship.on_click(reset_w_spaceship)
 
 button_go.on_click(go)
 button_faster.on_click(faster)
@@ -338,6 +454,9 @@ control_layout = row(button_slower, button_go, button_faster)
 reset_layout = row(button_reset_prev_agent, \
         button_reset_this_agent, \
         button_reset_next_agent)
+        
+spaceship_layout = row(button_reset_w_glider, button_reset_w_spaceship)
+
 rule_layout = row(input_birth, button_birth, input_survive, button_survive)
         
     
@@ -346,6 +465,7 @@ agent_toggle_layout = row(button_agent_switch)
 
 curdoc().add_root(display_layout)
 curdoc().add_root(control_layout)
+curdoc().add_root(spaceship_layout)
 curdoc().add_root(reset_layout)
 curdoc().add_root(rule_layout)
 
