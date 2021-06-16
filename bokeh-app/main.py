@@ -28,14 +28,14 @@ agent =  HARLI(device=device_string)
 
 policy_list = []
 
-directory_list = os.listdir("../policies/")
+directory_list = os.listdir("policies/")
 directory_list.sort()
 
 for filename in directory_list:
     
     if "HARLI" in filename and "glider" in filename:
         
-        policy_list.append(os.path.join("..", "policies", filename))
+        policy_list.append(os.path.join("policies", filename))
         
 # instantiate CARLE with a speed detection wrapper
 env = CARLE(height=128, width=128, device=device_string)
