@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from carle.env import CARLE
 from carle.mcl import SpeedDetector
-from game_of_carle.agents.toggle import Toggle
+from game_of_carle.agents.harli import HARLI
 
 import bokeh
 from bokeh.io import curdoc
@@ -21,26 +21,32 @@ from bokeh.models import TextInput, Button, Paragraph
 from bokeh.models import ColumnDataSource
 from bokeh.events import DoubleTap, Tap
 
-agent =  Toggle()
+
+device_string = "cpu"
+
+agent =  HARLI(device=device_string)
+
 policy_list = []
-directory_list = os.listdir("policies/")
+
+directory_list = os.listdir("../policies/")
+directory_list.sort()
 
 for filename in directory_list:
     
-    if "Toggle" in filename and "glider" in filename:
+    if "HARLI" in filename and "glider" in filename:
         
-        policy_list.append(os.path.join("policies", filename))
+        policy_list.append(os.path.join("..", "policies", filename))
         
 # instantiate CARLE with a speed detection wrapper
-env = CARLE(height=128, width=128)
+env = CARLE(height=128, width=128, device=device_string)
 env = SpeedDetector(env)
 
-# set Move/Morley rules
-my_rules = "B368/S245"
+# set rules
+# this agent was trained on B3/S023, B3/S236, B3/S237, and B3/S238
+my_rules = "B3/S023"
+
 
 agent.set_params(np.load(policy_list[0]))
-
-print(f"{len(policy_list)} Toggle glider policies found.")
 
 env.rules_from_string(my_rules)
 
@@ -67,6 +73,12 @@ line_plot = p_plot.line(line_width=3, color="firebrick", source=source_plot)
 button_go = Button(sizing_mode="stretch_width", label="Run >")     
 button_slower = Button(sizing_mode="stretch_width",label="<< Slower")
 button_faster = Button(sizing_mode="stretch_width",label="Faster >>")
+
+input_birth = TextInput(value=f"{env.birth}")
+input_survive = TextInput(value=f"{env.survive}")
+button_birth = Button(sizing_mode="stretch_width", label="Update Birth Rules")
+button_survive = Button(sizing_mode="stretch_width", label="Update Survive Rules")
+
 button_reset_prev_agent = Button(sizing_mode="stretch_width",label="Reset w/ Prev. Agent")
 button_reset_this_agent = Button(sizing_mode="stretch_width",label="Reset w/ This Agent")
 button_reset_next_agent = Button(sizing_mode="stretch_width",label="Reset w/ Next Agent")
@@ -214,6 +226,34 @@ def reset_prev_agent():
     
     message.text = f"reset with agent {agent_number}"
 
+def set_birth_rules():
+    env.birth_rule_from_string(input_birth.value)
+
+    my_message = "Rules updated to B"
+
+    for elem in env.birth:
+        my_message += str(elem)
+    my_message += "/S"    
+
+    for elem in env.survive:
+        my_message += str(elem)
+
+    message.text = my_message
+
+def set_survive_rules():
+    env.survive_rule_from_string(input_survive.value)
+
+    my_message = "Rules updated to B"
+
+    for elem in env.birth:
+        my_message += str(elem)
+    my_message += "/S"    
+
+    for elem in env.survive:
+        my_message += str(elem)
+
+    message.text = my_message
+
 def human_toggle(event):
     global action
 
@@ -221,18 +261,14 @@ def human_toggle(event):
     offset_x = (env.height - env.action_height) / 2
     offset_y = (env.width - env.action_width) / 2
 
-    print(offset_x, coords[0])
     coords[0] = coords[0] - offset_x
     coords[1] = coords[1] - offset_y
 
-    print(offset_x, coords)
     coords[0] = np.uint8(np.clip(coords[0], 0, env.action_height-1))
     coords[1] = np.uint8(np.clip(coords[1], 0, env.action_height-1))
 
     action[:, :, coords[0], coords[1]] = 1.0 * (not(action[:, :, coords[0], coords[1]]))
 
-    print(offset_x, coords[0])
-    #padded_action = stretch_pixel/2 + env.action_padding(action).squeeze()
     padded_action = stretch_pixel/2 + env.inner_env.action_padding(action).squeeze()
 
     my_img = (padded_action*2 + obs.squeeze()).cpu().numpy()
@@ -294,17 +330,24 @@ button_faster.on_click(faster)
 button_slower.on_click(slower)
 button_agent_switch.on_click(agent_on_off)
 
+button_birth.on_click(set_birth_rules)
+button_survive.on_click(set_survive_rules)
+
 display_layout = row(p, p_plot)
 control_layout = row(button_slower, button_go, button_faster)
-toggle_toggle_agent_layout = row(button_reset_prev_agent, \
+reset_layout = row(button_reset_prev_agent, \
         button_reset_this_agent, \
         button_reset_next_agent)
-
+rule_layout = row(input_birth, button_birth, input_survive, button_survive)
+        
+    
 message_layout = row(message)
 agent_toggle_layout = row(button_agent_switch)
 
 curdoc().add_root(display_layout)
 curdoc().add_root(control_layout)
-curdoc().add_root(toggle_toggle_agent_layout)
+curdoc().add_root(reset_layout)
+curdoc().add_root(rule_layout)
+
 curdoc().add_root(message_layout)
 curdoc().add_root(agent_toggle_layout)
