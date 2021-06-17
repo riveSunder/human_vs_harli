@@ -36,10 +36,14 @@ The Hebbian Automata Reinforcement Learning Improviser (HARLI) agent is a neural
 
 <div align="center">
 <img src="assets/hofstadter.png">
-[xkcd 917 by Randall Munroe](https://xkcd.com/917/)
+<br>
+<a href="https://xkcd.com/917/">xkcd 917 by Randall Munroe</a>
+  <br>
 </div>
 
-HARLI takes inspiration in part from the differentiable neural cellular automata described in the [thread](https://distill.pub/2020/selforg/) on distill.pub on differentiable self-organizing systems, and the Hebbian learning from random parameter initializations is adapted from Najarro and Risi's [Meta-Learning through Hebbian Plasticity in Random Networks](https://arxiv.org/abs/2007.02686). The source code is available for your perusal [here](https://github.com/riveSunder/harli_learning/blob/master/game_of_carle/agents/harli.py).
+
+
+HARLI takes inspiration in part from the differentiable neural cellular automata described in the [thread](https://distill.pub/2020/selforg/) on distill.pub on differentiable self-organizing systems, and Hebbian learning from random parameter initializations is adapted from Najarro and Risi's [Meta-Learning through Hebbian Plasticity in Random Networks](https://arxiv.org/abs/2007.02686). The source code for HARLI is available for your perusal [here](https://github.com/riveSunder/harli_learning/blob/master/game_of_carle/agents/harli.py).
 
 ## The Strategy
 
@@ -51,7 +55,11 @@ HARLI employs a strategy of generating waves of live cells and repeatedly resett
 
 Note that if you'd like to see HARLI in action at a much better resolution, try out the [interactive demo](https://mybinder.org/v2/gh/riveSunder/harli_learning/master?urlpath=/proxy/5006/bokeh-app), or clone this repository and try running the [demonstration notebook](https://github.com/riveSunder/harli_learning/blob/master/notebooks/evaluation.ipynb) locally. 
 
-Note that this reset wave strategy is far more rewarding than say, generating a single Life glider. A glider has an average reward around ~1.35 in this reward scheme, whereas the reset wave strategy can easily generate an average reward of 40 to 50 or more. 
+Although a glider works in all the rules that this agent was trained on, a single glider making its way across the CA grid only generates a mean reward of slightly over ~1.33. Instead of building gliders or spaceships as we might expect, HARLI discovered it could generate much higher rewards (mean rewards of 40 or more) by toggling a solid line of cells to generate traveling waves of live cells, and frequently resetting the environment (CARLE resets when every toggle is simultaneously toggled in a single time step). 
+
+A wave as used by HARLI is a fast moving front of live cells, and occurs in every set of rules used in this experiment, as they all employed the same birth rule of *B3*. Not only do waves generate a high reward as a moving artifact, but by setting off waves at the action space boundary a "boundary bonus" is achieved because all cells within the action space are considered to be at (0,0). Ironically, the latter decision was made to prevent reward hacking by agents manipulating live cells within the action space. Finally, HARLI can achieve even greater rewards by resetting the environment. When an agent resets the environment the CA grid is wiped clear of all live cells, effectively causing the center of mass of all live cells to move to (0,0).
+
+This reset wave strategy is far more rewarding than say, generating a single Life glider. A glider has an average reward around ~1.35 in this reward scheme, whereas the reset wave strategy can easily generate an average reward of 40 to 50 or more. 
 
 <div align="center">
 <img src="assets/glider_reward.gif">
