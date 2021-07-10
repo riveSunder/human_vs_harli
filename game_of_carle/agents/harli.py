@@ -71,7 +71,7 @@ class HARLI(CARLA):
         self.b_1 = nn.Parameter(torch.randn(1, 32), requires_grad=False).to(self.my_device)
         self.c_1 = nn.Parameter(torch.randn(1, 1), requires_grad=False).to(self.my_device)
         self.d_1 = nn.Parameter(torch.randn(1, 32), requires_grad=False).to(self.my_device)
-
+   
         self.act_0 = nn.Tanh()
         self.act_1 = nn.Sigmoid()
 
@@ -104,6 +104,7 @@ class HARLI(CARLA):
 
         if (0):
             self.zero_eligibility()
+
 
     def forward(self, obs):
         
@@ -156,6 +157,20 @@ class HARLI(CARLA):
         self.hebbian_update()
 
         return action
+
+    def get_weights(self):
+
+        weights = np.array([])
+
+        for param_0 in self.ca_0.parameters():
+
+            weights = np.append(weights, np.array(param_0).ravel())
+
+        for param_1 in self.ca_1.parameters():
+
+            weights = np.append(weights, np.array(param_0).ravel())
+
+        return weights
 
     def get_params(self):
         params = np.array([])
