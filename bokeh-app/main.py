@@ -57,9 +57,13 @@ global agent_number
 global agent_on
 global action
 global reward_sum
-                
-obs = env.reset()
+
+dim_wh = 24
+dim_ww = 24
 my_period = 512
+        
+obs = env.reset()
+my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
 
 number_agents = len(policy_list)
 agent_number = 0
@@ -70,13 +74,18 @@ action = torch.zeros(1, 1, env.action_height, env.action_width)
 reward_sum = 0.0
 
 p = figure(plot_width=3*256, plot_height=3*256, title="CA Universe")
-p_plot = figure(plot_width=int(2.5*256), plot_height=int(2.5*256), title="'Reward'")
 
+p_plot = figure(plot_width=int(1.25*256), plot_height=int(1.25*256), title="'Reward'")
+p_weights = figure(plot_width=int(1.255*256), plot_height=int(1.25*256), title="Weights")
+    
 source = ColumnDataSource(data=dict(my_image=[obs.squeeze().cpu().numpy()]))
 source_plot = ColumnDataSource(data=dict(x=np.arange(1), y=np.arange(1)*0))
+source_weights = ColumnDataSource(data=dict(my_image=[my_weights]))
 
 img = p.image(image='my_image',x=0, y=0, dw=256, dh=256, palette="Magma256", source=source)
 line_plot = p_plot.line(line_width=3, color="firebrick", source=source_plot)
+img_w = p_weights.image(image='my_image',x=0, y=0, dw=240, dh=240, \
+        palette="Magma256", source=source_weights)
 
 button_go = Button(sizing_mode="stretch_width", label="Run >")     
 button_slower = Button(sizing_mode="stretch_width",label="<< Slower")
@@ -94,7 +103,7 @@ button_reset_next_agent = Button(sizing_mode="stretch_width",label="Reset w/ Nex
 button_reset_w_spaceship = Button(sizing_mode="stretch_width",label="Reset w/ Spaceship")
 button_reset_w_glider = Button(sizing_mode="stretch_width",label="Reset w/ Glider")
 
-button_agent_switch = Button(sizing_mode="stretch_width", label="Turn Agent Off")
+button_agent_switch = Button(sizing_mode="stretch_width", label="Turn Agent On")
 
 message = Paragraph()
 
@@ -123,11 +132,15 @@ def update():
         (padded_action*2 + obs.squeeze()).cpu().numpy()
         new_data = dict(my_image=[my_img])
         
+        my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+        new_weights = dict(my_image=[my_weights])
+
         #new_line = dict(x=np.arange(my_step+2), y=rewards)
         new_line = dict(x=[my_step], y=[r.cpu().numpy().item()])
-        
+
         source.stream(new_data, rollover=1)
         source_plot.stream(new_line, rollover=2000)
+        source_weights.stream(new_weights, rollover=1)
 
         my_step += 1
         reward_sum += r.item()
@@ -193,16 +206,19 @@ def reset_w_spaceship():
     (padded_action*2 + obs.squeeze()).cpu().numpy()
     new_data = dict(my_image=[my_img])
 
+    new_line = dict(x=[my_step], y=[0])
+
+    my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+    new_weights = dict(my_image=[my_weights])
+
+    source_weights.stream(new_weights, rollover=1)
     source.stream(new_data, rollover=1)
-    source_plot.stream(new_line, rollover=2)
+    source_plot.stream(new_line, rollover=2000)
 
     message.text = f"agent {agent_number}, step {my_step} \n"\
             f"{policy_list[agent_number]}"
 
     rewards = np.array([0])
-
-    source_plot.stream(new_line, rollover=1)
-    source.stream(new_data, rollover=8)
 
 def reset_w_glider():
     global obs
@@ -240,16 +256,20 @@ def reset_w_glider():
     (padded_action*2 + obs.squeeze()).cpu().numpy()
     new_data = dict(my_image=[my_img])
 
+    new_line = dict(x=[my_step], y=[0])
+
+    my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+    new_weights = dict(my_image=[my_weights])
+
+    source_weights.stream(new_weights, rollover=1)
     source.stream(new_data, rollover=1)
-    source_plot.stream(new_line, rollover=2)
+    source_plot.stream(new_line, rollover=2000)
 
     message.text = f"agent {agent_number}, step {my_step} \n"\
             f"{policy_list[agent_number]}"
 
     rewards = np.array([0])
 
-    source_plot.stream(new_line, rollover=1)
-    source.stream(new_data, rollover=8)
 
 def reset_this_agent():
     global obs
@@ -273,9 +293,14 @@ def reset_this_agent():
     rewards = np.array([0])
     
     new_line = dict(x=[my_step], y=[0])
-    
-    source_plot.stream(new_line, rollover=1)
-    source.stream(new_data, rollover=8)
+
+    my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+    new_weights = dict(my_image=[my_weights])
+
+    source_weights.stream(new_weights, rollover=1)
+    source.stream(new_data, rollover=1)
+    source_plot.stream(new_line, rollover=2000)
+
  
 def reset_next_agent():
    
@@ -300,6 +325,10 @@ def reset_next_agent():
     
     new_line = dict(x=[my_step], y=[0])
     
+    my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+    new_weights = dict(my_image=[my_weights])
+
+    source_weights.stream(new_weights, rollover=1)
     source_plot.stream(new_line, rollover=1)
     source.stream(new_data, rollover=8)
     
@@ -333,6 +362,10 @@ def reset_prev_agent():
     
     new_line = dict(x=[my_step], y=[0])
     
+    my_weights = agent.get_weights().reshape(dim_wh, dim_ww)
+    new_weights = dict(my_image=[my_weights])
+
+    source_weights.stream(new_weights, rollover=1)
     source_plot.stream(new_line, rollover=1)
     source.stream(new_data, rollover=8)
     
@@ -449,7 +482,7 @@ button_agent_switch.on_click(agent_on_off)
 button_birth.on_click(set_birth_rules)
 button_survive.on_click(set_survive_rules)
 
-display_layout = row(p, p_plot)
+display_layout = row(p, column(p_plot, p_weights))
 control_layout = row(button_slower, button_go, button_faster)
 reset_layout = row(button_reset_prev_agent, \
         button_reset_this_agent, \
