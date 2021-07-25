@@ -29,7 +29,7 @@ If any of that sounds interesting to you, read on. You may also want to check ou
 You can also fork this repository and try your hand at replicating the experiment. 
 
 ```
-experiment.py -mg  128  -ms  256  -p  32  -sm  1  -v  1  -d  cuda:1  -dim  128  -s 13 42 1337 -a  HARLI  -w  RND2D  SpeedDetector  -tr  B3/S023  B3/S236  B3/S237  B3/S238  -vr  B3/S23  -tag  _harli_glider_experiment_
+python -m game_of_carle.experiment -mg  128  -ms  256  -p  32  -sm  1  -v  1  -d  cuda:1  -dim  128  -s 13 42 1337 -a  HARLI  -w  RND2D  SpeedDetector  -tr  B3/S023  B3/S236  B3/S237  B3/S238  -vr  B3/S23  -tag  _harli_glider_experiment_
 ```
 
 ## The Agent
