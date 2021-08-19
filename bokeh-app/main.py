@@ -283,7 +283,7 @@ def start():
     global agent_on
 
     rule_index = 0
-    max_steps = 256
+    max_steps = 128
 
     agent_on = True
 
