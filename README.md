@@ -9,7 +9,7 @@ To learn more about your adversary, check out the writeup and demo [here](https:
 <img src="assets/printB3_S345678_2312_1623293704.png">
 </div>
 
-[https://mybinder.org/v2/gh/riveSunder/harli_learning/master?urlpath=/proxy/5006/bokeh-app](https://mybinder.org/v2/gh/riveSunder/harli_learning/master?urlpath=/proxy/5006/bokeh-app)
+[https://mybinder.org/v2/gh/riveSunder/human_vs_harli/master?urlpath=/proxy/5006/bokeh-app](https://mybinder.org/v2/gh/riveSunder/human_vs_harli/master?urlpath=/proxy/5006/bokeh-app)
 
 <div align="center">
 <img src="assets/hofstadter.png">
@@ -19,8 +19,6 @@ To learn more about your adversary, check out the writeup and demo [here](https:
 </div>
 
 HARLI takes inspiration in part from the differentiable neural cellular automata described in the [thread](https://distill.pub/2020/selforg/) on distill.pub on differentiable self-organizing systems, and Hebbian learning from random parameter initializations is adapted from Najarro and Risi's [Meta-Learning through Hebbian Plasticity in Random Networks](https://arxiv.org/abs/2007.02686). The source code for HARLI is available for your perusal [here](https://github.com/riveSunder/harli_learning/blob/master/game_of_carle/agents/harli.py).
-
-## The Strategy
 
 
 <div align="center">
